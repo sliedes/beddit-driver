@@ -1,0 +1,33 @@
+The Beddit sensor shows as a normal Bluetooth RFCOMM (serial port)
+device.
+
+The sensor accepts a few newline-terminated ASCII commands. The ones I
+know of are:
+
+   OK -> sensor responds OK
+
+   INFO -> sensor responds
+     "INFO VERSION: 1.0; CHANNELS: normal, gained; SAMPLERATE: 140.0;
+      SERIAL: xx:xx:xx:xx:xx:x; BUILD: 037d7f8"
+
+   START -> sensor starts measuring and sending binary data.
+
+The binary data comes in packets, the format of which is as follows:
+
+dword packetNumber (consecutive)
+word payloadLength
+byte payload[payloadLength]
+dword crc32
+
+My sensor always sends 64 bytes of payload.
+
+The payload consists of raw 16-bit samples. Words 0, 2, 4, ... are for
+the "normal" channel, while words 1, 3, 5, ... are for the "gained"
+channel. One 64-byte packet thus contains 2*16 samples, or 0.114
+seconds worth of data at 140 Hz.
+
+At least with my bluetooth connection data is occasionally lost, so
+the receiving side needs to be able to detect dropped bytes and
+resynchronize.
+
+The CRC32 is calculated over the header + the payload.

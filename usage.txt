@@ -1,0 +1,61 @@
+Note: I only know how to do this in Linux. YMMV.
+
+There's lot to be polished here, but this should work for now.
+
+First connect to your Beddit - it has a RFCOMM (Bluetooth serial port)
+service. Either use some GUI tool or do something like this:
+
+------------------------------------------------------------
+# hcitool scan
+Scanning ...
+        xx:xx:xx:xx:xx:xx       Beddit NNNN
+------------------------------------------------------------
+
+Note the Bluetooth MAC. You need it below.
+
+------------------------------------------------------------
+# /etc/init.d/bluetooth restart
+------------------------------------------------------------
+
+Now you should be able to connect to your Beddit:
+
+------------------------------------------------------------
+# rfcomm connect xx:xx:xx:xx:xx:xx
+------------------------------------------------------------
+
+If this command succeeds, you will have a /dev/rfcomm0 (or other
+number) character device you can use to communicate with Beddit. Now
+you can start the measurement:
+
+------------------------------------------------------------
+$ ./measure.py /dev/rfcomm0
+------------------------------------------------------------
+
+The command will produce a timestamped file named 'data.out' (it will
+refuse to run if one exists). That file will show the data sent by
+Beddit in hexadecimal format. Terminate the program with ctrl-c when
+you wish to stop the measurement. It will produce about 100 megabytes
+of data in one night.
+
+The decoding utility will run on a binary file without timestamps.
+to_binary.py converts data.out to data.bin, which only contains the
+raw data your Beddit sent:
+
+------------------------------------------------------------
+$ ./to_binary.py
+$ ./decode.py
+[you may see some warnings about CRC errors and inconsistent packet
+numbers if the connection had problems.]
+------------------------------------------------------------
+
+decode.py produces a file named data.txt which has the raw sample
+data in numeric format. The first column is the "normal" channel,
+while the second column is the "gained" channel. If you had any missed
+packets, the data from those packets is currently simply dropped (so
+the data in data.txt will skip forward without any indication that
+anything is wrong).
+
+140 samples (lines) correspond to one second of data. If you plot a
+minute (8400 samples) of the data at a point when you are in deep
+sleep, you should be able to see your heartbeats and your breathing
+there.
