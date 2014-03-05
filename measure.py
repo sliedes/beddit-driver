@@ -32,10 +32,11 @@ def wait_write(dev):
     return select.select([], [dev], [dev])
 
 def main():
+    if len(sys.argv) != 2:
+        print("Usage: %s /dev/rfcommN" % sys.argv[0])
+        sys.exit(1)
     assert_not_exists('data.out')
-
     data_out = open('data.out', 'w')
-
     dev = open(sys.argv[1], 'rb+', 0)
     print("Opened device %s." % sys.argv[1])
     print("> OK")
@@ -51,7 +52,6 @@ def main():
     set_nonblock(dev)
     print("> START")
     p(dev, "START\n")
-
     start_t = time.time()
     while True:
         select.select([dev], [], [dev])
